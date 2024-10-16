@@ -2,7 +2,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.LinkedList;
 
 // Contact class to hold contact details
 class Contact {
@@ -45,7 +45,7 @@ class RoundedButton extends JButton {
 
 // Main class for the Phone Booker application
 public class Main extends JFrame {
-    ArrayList<Contact> contactList = new ArrayList<>(); // List to store contacts
+    LinkedList<Contact> contactList = new LinkedList<>(); // List to store contacts
     JTextField nameField, phoneField, emailField; // Input fields for contact details
     JTable contactTable; // Table to display contacts
     DefaultTableModel tableModel; // Model to handle table data
@@ -220,144 +220,85 @@ public class Main extends JFrame {
     public Contact searchContact(String query) {
         for (Contact contact : contactList) {
             if (contact.name.equalsIgnoreCase(query) || contact.phoneNumber.equals(query)) {
-                return contact; // Return found contact
+                return contact; // Return the contact if found
             }
         }
         return null; // Return null if not found
     }
 
-    // Prompt user for contact and display the contact details
+    // Search and display a contact
     public void searchContactAndDisplay() {
-        String query = JOptionPane.showInputDialog(this, "Enter Name or Phone Number:");
-        if (query != null) {
-            Contact contact = searchContact(query); // Search for contact
-            if (contact != null) {
-                JOptionPane.showMessageDialog(this, "Name: " + contact.name + "\nPhone: " + contact.phoneNumber + "\nEmail: " + contact.email);
+        String query = JOptionPane.showInputDialog(this, "Enter Name or Phone Number to search:");
+        if (query != null && !query.isEmpty()) {
+            Contact foundContact = searchContact(query); // Search for contact
+            if (foundContact != null) {
+                tableModel.setRowCount(0); // Clear existing table data
+                tableModel.addRow(new Object[]{foundContact.name, foundContact.phoneNumber, foundContact.email}); // Add contact data to table
             } else {
-                JOptionPane.showMessageDialog(this, "Contact not found."); // Not found message
+                JOptionPane.showMessageDialog(this, "Contact not found."); // Show error
             }
         }
     }
 
     // Display all contacts in the table
     public void displayAllContacts() {
-        if (contactList.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No contacts to display."); // No contacts message
-        } else {
-            tableModel.setRowCount(0); // Clear existing table rows
-            for (Contact contact : contactList) {
-                tableModel.addRow(new Object[]{contact.name, contact.phoneNumber, contact.email}); // Add each contact to the table
-            }
-            JOptionPane.showMessageDialog(this, "All contacts displayed."); // Show confirmation
+        tableModel.setRowCount(0); // Clear existing table data
+        for (Contact contact : contactList) {
+            tableModel.addRow(new Object[]{contact.name, contact.phoneNumber, contact.email}); // Add each contact to table
         }
     }
 
-    // Delete a contact by name or phone
+    // Delete a contact from the list by name or phone
     public void deleteContact() {
         String query = JOptionPane.showInputDialog(this, "Enter Name or Phone Number to delete:");
-        if (query != null) {
-            Contact contact = searchContact(query); // Search for contact
-            if (contact != null) {
-                contactList.remove(contact); // Remove from contact list
-                displayAllContacts(); // Refresh the table
-                JOptionPane.showMessageDialog(this, "Contact deleted successfully."); // Success message
+        if (query != null && !query.isEmpty()) {
+            Contact foundContact = searchContact(query); // Search for contact
+            if (foundContact != null) {
+                contactList.remove(foundContact); // Remove contact
+                displayAllContacts(); // Refresh table
+                JOptionPane.showMessageDialog(this, "Contact deleted successfully."); // Show success
             } else {
-                JOptionPane.showMessageDialog(this, "Contact not found."); // Not found message
+                JOptionPane.showMessageDialog(this, "Contact not found."); // Show error
             }
         }
     }
 
-    // Update a contact's details
+    // Update an existing contact's details
     public void updateContact() {
         String query = JOptionPane.showInputDialog(this, "Enter Name or Phone Number to update:");
-        if (query != null) {
-            Contact contact = searchContact(query); // Search for contact
-            if (contact != null) {
-                String newName = JOptionPane.showInputDialog(this, "Enter new name:", contact.name);
-                String newPhone = JOptionPane.showInputDialog(this, "Enter new phone number:", contact.phoneNumber);
-                String newEmail = JOptionPane.showInputDialog(this, "Enter new email:", contact.email);
+        if (query != null && !query.isEmpty()) {
+            Contact foundContact = searchContact(query); // Search for contact
+            if (foundContact != null) {
+                String newName = JOptionPane.showInputDialog(this, "Enter new name:", foundContact.name);
+                String newPhone = JOptionPane.showInputDialog(this, "Enter new phone number:", foundContact.phoneNumber);
+                String newEmail = JOptionPane.showInputDialog(this, "Enter new email:", foundContact.email);
 
-                // Check if new contact details conflict with existing ones
-                if (!newName.isEmpty() && !newPhone.isEmpty()) {
-                    Contact existingContact = searchContact(newName);
-                    if (existingContact == null || existingContact == contact) {
-                        existingContact = searchContact(newPhone);
-                    }
-                    if (existingContact == null || existingContact == contact) {
-                        contact.name = newName; // Update name
-                        contact.phoneNumber = newPhone; // Update phone
-                        contact.email = newEmail; // Update email
-                        displayAllContacts(); // Refresh table
-                        JOptionPane.showMessageDialog(this, "Contact updated successfully."); // Success message
-                    } else {
-                        JOptionPane.showMessageDialog(this, "A contact with the same details already exists."); // Conflict error
-                    }
-                } else {
-                    JOptionPane.showMessageDialog(this, "Name and Phone are required."); // Validation error
-                }
+                // Update contact details
+                foundContact.name = newName != null ? newName : foundContact.name;
+                foundContact.phoneNumber = newPhone != null ? newPhone : foundContact.phoneNumber;
+                foundContact.email = newEmail != null ? newEmail : foundContact.email;
+
+                displayAllContacts(); // Refresh table
+                JOptionPane.showMessageDialog(this, "Contact updated successfully."); // Show success
             } else {
-                JOptionPane.showMessageDialog(this, "Contact not found."); // Not found error
+                JOptionPane.showMessageDialog(this, "Contact not found."); // Show error
             }
         }
     }
 
-    // Analyze search efficiency using linear and binary search
+    // Analyze search efficiency and display result
     public void analyzeSearchEfficiency() {
-        String query = JOptionPane.showInputDialog(this, "Enter Name or Phone Number for search analysis:");
-        if (query != null) {
-            if (contactList.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "No contacts to analyze."); // Empty list message
-                return;
-            }
-
-            // Sort contacts alphabetically by name for binary search
-            contactList.sort((c1, c2) -> c1.name.compareToIgnoreCase(c2.name));
-
-            long startTime = System.nanoTime(); // Start timing linear search
-            Contact linearResult = searchContact(query);
-            long linearSearchTime = System.nanoTime() - startTime; // End timing
-
-            startTime = System.nanoTime(); // Start timing binary search
-            Contact binaryResult = binarySearch(query, 0, contactList.size() - 1);
-            long binarySearchTime = System.nanoTime() - startTime; // End timing
-
-            // Show search times and results
-            JOptionPane.showMessageDialog(this, "Linear Search Time: " + linearSearchTime + " ns\nBinary Search Time: " + binarySearchTime + " ns\n"
-                    + (linearResult != null ? "Contact found." : "Contact not found."));
-        }
+        JOptionPane.showMessageDialog(this, "Analyzing search efficiency feature coming soon."); // Placeholder for feature
     }
 
-    // Binary search method for analyzing search efficiency
-    private Contact binarySearch(String query, int low, int high) {
-        if (low > high) return null; // Base case: Not found
-
-        int mid = (low + high) / 2;
-        Contact midContact = contactList.get(mid);
-
-        if (midContact.name.equalsIgnoreCase(query) || midContact.phoneNumber.equals(query)) {
-            return midContact; // Found contact
-        }
-
-        if (midContact.name.compareToIgnoreCase(query) < 0) {
-            return binarySearch(query, mid + 1, high); // Search right half
-        } else {
-            return binarySearch(query, low, mid - 1); // Search left half
-        }
-    }
-
-    // Sort the contact list alphabetically by name
+    // Sort contacts by name
     public void sortContacts() {
-        if (contactList.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No contacts to sort."); // Empty list message
-        } else {
-            contactList.sort((c1, c2) -> c1.name.compareToIgnoreCase(c2.name)); // Sort by name
-            displayAllContacts(); // Refresh table
-            JOptionPane.showMessageDialog(this, "Contacts sorted successfully."); // Success message
-        }
+        contactList.sort((c1, c2) -> c1.name.compareToIgnoreCase(c2.name)); // Sort by name
+        displayAllContacts(); // Refresh table
     }
 
-    // Clear input fields for name, phone, and email
-    public void clearFields() {
+    // Clear input fields
+    private void clearFields() {
         nameField.setText("");
         phoneField.setText("");
         emailField.setText("");
@@ -365,6 +306,6 @@ public class Main extends JFrame {
 
     // Main method to run the application
     public static void main(String[] args) {
-        new Main(); // Create an instance of the Main class to start the application
+        SwingUtilities.invokeLater(Main::new); // Create and run application
     }
 }
